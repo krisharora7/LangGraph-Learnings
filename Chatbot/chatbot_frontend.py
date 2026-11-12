@@ -27,8 +27,13 @@ if user_input:
         st.text(user_input)
 
     # get ai responses -> 
-    response = chatbot.invoke({'messages': HumanMessage(content=user_input)}, config=CONFIG)
-    ai_message = response['messages'][-1].content
-    st.session_state['message_history'].append({'role':'ai', 'content':ai_message})
     with st.chat_message('assistant'):
-        st.text(ai_message)
+        ai_message = st.write_stream(
+            # it's okay if we didn't write message_chunk.content and just write message_content because st.write_stream() accepts generators that yield strings or supported objects such as LangChain message chunks. It knows how to handle LangChain message chunks and extract/display their text content. 
+            message_chunk for message_chunk, metadata in chatbot.stream(
+                {'messages': HumanMessage(content=user_input)},
+                config=CONFIG,
+                stream_mode='messages'
+            )
+        )
+    st.session_state['message_history'].append({'role':'ai', 'content':ai_message})
