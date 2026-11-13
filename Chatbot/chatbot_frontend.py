@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_core.messages import HumanMessage
-from chatbot_backend import chatbot
+from chatbot_backend import chatbot, retrieve_all_threads
 import uuid
 
 # ********************************************************* Utility functions *********************************************************
@@ -35,7 +35,7 @@ if 'thread_id' not in st.session_state:
 
 # create a list of threads to print different converstaions in sidebar
 if 'chat_threads' not in st.session_state:
-    st.session_state['chat_threads'] = []
+    st.session_state['chat_threads'] = retrieve_all_threads()
 
 add_thread(st.session_state['thread_id'])
 
