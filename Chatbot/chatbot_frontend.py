@@ -1,6 +1,6 @@
 import streamlit as st
-from langchain_core.messages import HumanMessage
-from chatbot_backend import chatbot, retrieve_all_threads
+from langchain_core.messages import HumanMessage, AIMessage
+from chatbot_with_tool_backend import chatbot, retrieve_all_threads
 import uuid
 
 # ********************************************************* Utility functions *********************************************************
@@ -91,13 +91,27 @@ if user_input:
         'run_name': "chat_turn" # optional
     }
     
-    with st.chat_message('assistant'):
-        ai_message = st.write_stream(
-            # it's okay if we didn't write message_chunk.content and just write message_content because st.write_stream() accepts generators that yield strings or supported objects such as LangChain message chunks. It knows how to handle LangChain message chunks and extract/display their text content. 
-            message_chunk for message_chunk, metadata in chatbot.stream(
-                {'messages': HumanMessage(content=user_input)},
+    # with st.chat_message('assistant'):
+    #     ai_message = st.write_stream(
+    #         # it's okay if we didn't write message_chunk.content and just write message_content because st.write_stream() accepts generators that yield strings or supported objects such as LangChain message chunks. It knows how to handle LangChain message chunks and extract/display their text content. 
+    #         message_chunk for message_chunk, metadata in chatbot.stream(
+    #             {'messages': HumanMessage(content=user_input)},
+    #             config=CONFIG,
+    #             stream_mode='messages'
+    #         )
+    #     )
+    # st.session_state['message_history'].append({'role':'ai', 'content':ai_message})
+    with st.chat_message("assistant"):
+        def ai_only_stream():
+            for message_chunk, metadata in chatbot.stream(
+                {"messages": [HumanMessage(content=user_input)]},
                 config=CONFIG,
-                stream_mode='messages'
-            )
-        )
-    st.session_state['message_history'].append({'role':'ai', 'content':ai_message})
+                stream_mode="messages"
+            ):
+                if isinstance(message_chunk, AIMessage):
+                    # yield only assistant tokens
+                    yield message_chunk.content
+
+        ai_message = st.write_stream(ai_only_stream())
+
+    st.session_state['message_history'].append({'role': 'assistant', 'content': ai_message})
