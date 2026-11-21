@@ -82,7 +82,15 @@ if user_input:
         st.text(user_input)
 
     # get ai responses -> 
-    CONFIG = {'configurable': {'thread_id': st.session_state['thread_id']}}
+    # CONFIG = {'configurable': {'thread_id': st.session_state['thread_id']}}
+
+    # we will add our thread_id in our metadata too in config so that LangSmith can store all conversation of same threads together, so we can see all conversations of same chat together in threads of traces.
+    CONFIG = {
+        'configurable': {'thread_id': st.session_state['thread_id']},
+        'metadata': {'thread_id': st.session_state['thread_id']},
+        'run_name': "chat_turn" # optional
+    }
+    
     with st.chat_message('assistant'):
         ai_message = st.write_stream(
             # it's okay if we didn't write message_chunk.content and just write message_content because st.write_stream() accepts generators that yield strings or supported objects such as LangChain message chunks. It knows how to handle LangChain message chunks and extract/display their text content. 
